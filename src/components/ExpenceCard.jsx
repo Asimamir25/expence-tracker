@@ -1,168 +1,119 @@
-// import React, { useEffect, useState } from "react";
-
-// const ExpenceCard = () => {
-//   const Categpry = ["Grocery", "Transport"];
-//   const initialLastCategories = ["Food", "Entertainment"];
-
-//   const [last, setLast] = useState(initialLastCategories);
-//   const [category, setCategory] = useState("");
-//   const [result, setResult] = useState([...Categpry, ...last]);
-
-//   // Update result whenever 'last' changes
-//   useEffect(() => {
-//     setResult([...Categpry, ...last]);
-//   }, [last]);
-
-//   // Prevent adding empty categories
-//   const handleCategory = () => {
-//     if (category.trim() === "") return;
-//     setLast([...last, category]); // Updates 'last', triggering useEffect
-//     setCategory(""); // Clears input field
-//   };
-
-//   // Properly reset categories
-//   const handleReset = () => {
-//     setLast(initialLastCategories);
-//   };
-
-//   return (
-//     <div className="container m-5 d-flex justify-content-center align-items-center">
-//       <div className="card shadow text-start w-50">
-//         <div className="card-body">
-//           <h4 className="card-title">Expenses Category</h4>
-//           <p className="card-text">Add/Remove Expense Categories Below</p>
-
-//           <div className="d-flex flex-wrap gap-2 my-3">
-//             {result.map((item, index) => (
-//               <button key={index} type="button" className="btn btn-category">
-//                 {item}
-//               </button>
-//             ))}
-//           </div>
-
-//           <input
-//             type="text"
-//             className="form-control my-3"
-//             placeholder="Enter new category"
-//             value={category}
-//             onChange={(e) => setCategory(e.target.value)}
-//           />
-
-//           <div className="d-flex gap-2 mt-2 justify-content-end">
-//             <button className="btn btn-secondary" onClick={handleReset}>
-//               Reset
-//             </button>
-//             <button className="btn btn-primary" onClick={handleCategory}>
-//               Save
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ExpenceCard;
-// import { Alert } from "bootstrap/dist/js/bootstrap.bundle.min";
-// import React, { useEffect, useState } from "react";
-
-// import { ToastContainer, toast } from "react-toastify";
-// const ExpenceCard = () => {
-//   const [count, setCount] = useState(0);
-
-//   const handleDec = () => {
-//     if (count <= 0) {
-//       setCount(0);
-//       toast("Number can be 0!");
-//     } else {
-//       setCount(count - 1);
-//     }
-//   };
-//   const handleInc = () => {
-//     if (count < 10) {
-//       setCount(count + 1);
-//     } else {
-//       toast("Max number reacy!");
-//     }
-//   };
-//   return (
-//     <div>
-//       <button
-//         type="button"
-//         className="btn btn-primary"
-//         onClick={() => {
-//           handleDec();
-//         }}
-//       >
-//         -
-//       </button>
-//       <h1>{count}</h1>
-//       <button
-//         className="btn btn-success"
-//         onClick={() => {
-//           handleInc();
-//         }}
-//       >
-//         +
-//       </button>
-//       <ToastContainer />
-//     </div>
-//   );
-// };
-
-// export default ExpenceCard;
-// import React, { useState } from "react";
-
-// const ExpenceCard = () => {
-//   const [text, setText] = useState("On");
-//   const handleToggel = () => {
-//     if (text == "On") {
-//       setText("Off");
-//     } else if (text == "Off") {
-//       setText("On");
-//     }
-//   };
-//   return (
-//     <div>
-//       <button
-//         type="button"
-//         className={`${text == "On" ? "btn btn-primary" : "btn btn-success"}`}
-//         onClick={() => {
-//           handleToggel();
-//         }}
-//       >
-//         {text}
-//       </button>
-//     </div>
-//   );
-// };
-
-// export default ExpenceCard;
 import React, { useState } from "react";
 
-const ExpenceCard = () => {
-  const [text, setText] = useState("Show");
-  const handleToggel = () => {
-    if (text === "Show") {
-      setText("Hide");
-    } else if (text === "Hide") {
-      setText("Show");
+const ExpenseSplitter = () => {
+  const [name, setName] = useState("");
+  const [expense, setExpense] = useState("");
+  const [amount, setAmount] = useState("");
+  const [budget, setBudget] = useState([]);
+
+  const addBudget = () => {
+    if (!name.trim() || !expense.trim() || !amount.trim() || isNaN(amount)) {
+      alert("Please enter valid details.");
+      return;
     }
+
+    setBudget([...budget, { name, expense, amount: Number(amount) }]);
+    setName("");
+    setExpense("");
+    setAmount("");
   };
+
+  const total = budget.reduce((sum, item) => sum + Number(item.amount), 0);
+  const perPersonShare = budget.length > 0 ? total / budget.length : 0;
+
+  const balances = budget.map((item) => ({
+    name: item.name,
+    balance: item.amount - perPersonShare, // If negative, they owe money
+  }));
+
+  // Sorting balances into givers and receivers
+  const givers = balances
+    .filter((b) => b.balance < 0)
+    .sort((a, b) => a.balance - b.balance);
+  const receivers = balances
+    .filter((b) => b.balance > 0)
+    .sort((a, b) => b.balance - a.balance);
+
+  const transactions = [];
+  let i = 0,
+    j = 0;
+
+  while (i < givers.length && j < receivers.length) {
+    let giver = givers[i];
+    let receiver = receivers[j];
+    let amountToPay = Math.min(-giver.balance, receiver.balance);
+
+    transactions.push(
+      `${giver.name} pays ${receiver.name} $${amountToPay.toFixed(2)}`
+    );
+
+    // Update balances
+    giver.balance += amountToPay;
+    receiver.balance -= amountToPay;
+
+    if (giver.balance === 0) i++;
+    if (receiver.balance === 0) j++;
+  }
+
   return (
     <div>
-      {text === "Show" ? <h1>Showing</h1> : <h1></h1>}
-      <button
-        type="button"
-        className={`${text == "Hide" ? "btn btn-primary" : "btn btn-success"}`}
-        onClick={() => {
-          handleToggel();
-        }}
-      >
-        {text}
+      <h2>Bill Splitter</h2>
+      <div className="d-flex w-100 gap-2">
+        <input
+          type="text"
+          value={name}
+          className="form-control"
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter Name"
+        />
+        <input
+          type="text"
+          value={expense}
+          className="form-control"
+          onChange={(e) => setExpense(e.target.value)}
+          placeholder="Enter Expense Type"
+        />
+        <input
+          type="number"
+          className="form-control"
+          value={amount}
+          placeholder="Enter Amount"
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </div>
+      <button className="btn btn-success mt-3" onClick={addBudget}>
+        Add Expense
       </button>
+
+      <div className="mt-4">
+        {budget.map((item, index) => (
+          <div key={index} className="d-flex gap-3">
+            <h5>{item.name}</h5>
+            <h5>{item.expense}</h5>
+            <h5>${item.amount}</h5>
+          </div>
+        ))}
+      </div>
+
+      <h3>Total: ${total.toFixed(2)}</h3>
+      <h3>Each Person Pays: ${perPersonShare.toFixed(2)}</h3>
+
+      <h3>Who Owes What:</h3>
+      {balances.map((b, index) => (
+        <h5 key={index}>
+          {b.name}{" "}
+          {b.balance > 0
+            ? `should receive $${b.balance.toFixed(2)}`
+            : `owes $${(-b.balance).toFixed(2)}`}
+        </h5>
+      ))}
+
+      <h3>Settlements:</h3>
+      {transactions.map((t, index) => (
+        <h5 key={index}>{t}</h5>
+      ))}
     </div>
   );
 };
 
-export default ExpenceCard;
+export default ExpenseSplitter;
